@@ -65,4 +65,4 @@ Self-test (screenshots, never deletes anything): `PETAL_SELFTEST=1 PETAL_SHOTS=<
 - `scripts/clean.ps1` closes running processes, backs up and deletes registry keys, and recycles files.
   It runs elevated (one UAC prompt per cleanup) only when something needs admin rights.
 
-Registry backups live in `%APPDATA%\petal-uninstaller\registry-backups` (History button in the title bar).
+Registry backups live in `%APPDATA%\Petal Uninstaller\registry-backups` (History button in the title bar).
