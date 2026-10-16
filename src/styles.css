@@ -49,16 +49,7 @@ input { font: inherit; color: inherit; }
 .titlebar button, .titlebar input, .titlebar label { -webkit-app-region: no-drag; }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; color: var(--rose); letter-spacing: .2px; }
 .brand .i { width: 20px; height: 20px; }
-.tabs { display: flex; gap: 2px; background: var(--base); padding: 3px; border-radius: 9px; }
-.tab {
-  display: flex; align-items: center; gap: 6px; border: 0; background: none; padding: 5px 11px; border-radius: 7px;
-  color: var(--subtle); font-weight: 500; cursor: pointer; transition: background .15s, color .15s;
-}
-.tab .i { width: 16px; height: 16px; }
-.tab:hover { color: var(--text); }
-.tab.active { background: var(--overlay); color: var(--text); }
-.count { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.tab.active .count { color: var(--iris); }
+.app-count { font-size: 12px; color: var(--subtle); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 64px; }
 .search {
   flex: 1; max-width: 420px; display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 6px 0 10px;
   background: var(--base); border: 1px solid var(--overlay); border-radius: 8px; color: var(--muted); transition: border-color .15s;
@@ -126,6 +117,7 @@ input { font: inherit; color: inherit; }
 .cell.num { text-align: right; color: var(--subtle); font-variant-numeric: tabular-nums; }
 .pill { flex: none; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; letter-spacing: .3px; text-transform: uppercase; }
 .pill.new { background: color-mix(in srgb, var(--foam) 18%, transparent); color: var(--foam); }
+.pill.store { background: color-mix(in srgb, var(--iris) 18%, transparent); color: var(--iris); }
 .pill.warn { background: color-mix(in srgb, var(--gold) 18%, transparent); color: var(--gold); }
 .pill.high { background: color-mix(in srgb, var(--pine) 22%, transparent); color: var(--foam); }
 .pill.low { background: color-mix(in srgb, var(--gold) 16%, transparent); color: var(--gold); }

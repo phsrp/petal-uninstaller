@@ -15,13 +15,14 @@ force-remove broken ones, and clean up the files and registry keys they leave be
   App Paths, startup entries and the uninstall entry. You review everything before it is deleted.
 - **Safe by default**: files go to the Recycle Bin, every registry key is exported to a `.reg` backup first,
   and system folders are never offered. "Sure" items are ticked; "Check" items are not.
-- **Store apps**: list and remove Microsoft Store (MSIX/AppX) apps on their own tab.
+- **One list for everything**: normal programs and Microsoft Store (MSIX/AppX) apps together, with a "Store" tag on Store apps.
+  Tick a mix of both and remove them in one go.
 - **Remove entry only**: clean dead entries out of the installed programs list.
 - **Find leftovers** without uninstalling, **open install folder**, **open in Registry Editor**, **search the web**.
 - **New since last run** highlight, instant search, sortable columns, export the list to HTML.
 - Rosé Pine and Rosé Pine Dawn themes, Montserrat font, [Tabler Icons](https://tabler.io/icons).
 
-| Leftovers review | Right-click menu | Light theme |
+| Leftovers review | Right-click menu | Light theme, Store apps tagged |
 | --- | --- | --- |
 | ![Leftovers](docs/leftovers.png) | ![Menu](docs/menu.png) | ![Light](docs/light.png) |
 
@@ -42,7 +43,6 @@ or click **Restart as admin** in the banner.
 | Ctrl+A | Tick everything shown |
 | Enter / Del | Uninstall (ticked programs, or the highlighted one) |
 | Shift+Del | Force remove |
-| Ctrl+Tab | Desktop apps / Store apps |
 | F5 | Refresh |
 
 ## Building

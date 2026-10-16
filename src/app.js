@@ -11,10 +11,10 @@ function hydrateIcons(root = document) {
 }
 
 const state = {
-  kind: 'desktop',
+  // Desktop programs and Store apps are scanned separately but shown as one list.
   apps: { desktop: [], store: [] },
   loaded: { desktop: false, store: false },
-  checked: { desktop: new Set(), store: new Set() },
+  checked: new Set(),
   focused: null,
   query: '',
   sort: { key: 'name', dir: 1 },
@@ -64,18 +64,22 @@ async function load(kind, { quiet = false } = {}) {
     const list = await window.petal.list(kind);
     state.apps[kind] = list;
     state.loaded[kind] = true;
-    const ids = new Set(list.map((a) => a.id));
-    for (const id of [...state.checked[kind]]) if (!ids.has(id)) state.checked[kind].delete(id);
-    $('#count-' + kind).textContent = list.length;
+    const ids = new Set(allApps().map((a) => a.id));
+    for (const id of [...state.checked]) if (!ids.has(id)) state.checked.delete(id);
+    const n = allApps().length;
+    $('#app-count').textContent = `${n} app${n === 1 ? '' : 's'}`;
   } catch (e) {
     toast('Could not read installed programs: ' + e.message, true);
   }
-  if (kind === state.kind) { $('#loading').hidden = true; render(); }
+  if (kind === 'desktop') $('#loading').hidden = true;
+  if (state.loaded.desktop) render();
 }
+const allApps = () => [...state.apps.desktop, ...state.apps.store];
+const loadAll = (opts) => Promise.all([load('desktop', opts), load('store', { quiet: true })]);
 
 function visible() {
   const q = state.query.trim().toLowerCase();
-  let list = state.apps[state.kind];
+  let list = allApps();
   if (q) list = list.filter((a) => a.name.toLowerCase().includes(q) || (a.publisher || '').toLowerCase().includes(q));
   const { key, dir } = state.sort;
   return [...list].sort((a, b) => {
@@ -94,18 +98,18 @@ const byId = (id) => state.apps.desktop.find((a) => a.id === id) || state.apps.s
 let rendered = [];
 function render() {
   rendered = visible();
-  const checked = state.checked[state.kind];
+  const checked = state.checked;
   const q = state.query.trim();
   $('#list').innerHTML = rendered.map((a, i) => `
     <div class="row${checked.has(a.id) ? ' checked' : ''}${state.focused === a.id ? ' focused' : ''}" data-i="${i}">
       <label class="cb"><input type="checkbox" ${checked.has(a.id) ? 'checked' : ''} tabindex="-1"><span></span></label>
       <span class="app-icon ${a.kind}" data-icon="${i}">${iconHtml(a)}</span>
-      <span class="cell name"><span class="t">${highlight(a.name, q)}</span>${a.isNew ? '<span class="pill new">New</span>' : ''}${a.kind === 'desktop' && !a.hasUninstaller ? '<span class="pill warn" title="No uninstaller registered">Broken</span>' : ''}</span>
+      <span class="cell name"><span class="t">${highlight(a.name, q)}</span>${a.kind === 'store' ? '<span class="pill store" title="Microsoft Store app (Windows package)">Store</span>' : ''}${a.isNew ? '<span class="pill new">New</span>' : ''}${a.kind === 'desktop' && !a.hasUninstaller ? '<span class="pill warn" title="No uninstaller registered">Broken</span>' : ''}</span>
       <span class="cell pub">${highlight(a.publisher || '', q)}</span>
       <span class="cell num">${fmtKB(a.sizeKB)}</span>
       <span class="cell num date">${fmtDate(a.installDate)}</span>
     </div>`).join('');
-  const empty = !rendered.length && state.loaded[state.kind];
+  const empty = !rendered.length && state.loaded.desktop;
   $('#empty').hidden = !empty;
   $('#empty-text').textContent = state.query ? 'Nothing matches your search.' : 'No programs found.';
   $$('.list-head .sort').forEach((s) => (s.innerHTML = ''));
@@ -138,8 +142,8 @@ async function loadIcons() {
 }
 
 function updateSelection() {
-  const checked = state.checked[state.kind];
-  const sel = state.apps[state.kind].filter((a) => checked.has(a.id));
+  const checked = state.checked;
+  const sel = allApps().filter((a) => checked.has(a.id));
   const n = sel.length;
   $('#sel-count').textContent = n;
   const kb = sel.reduce((s, a) => s + (a.sizeKB || 0), 0);
@@ -155,7 +159,7 @@ function updateSelection() {
 }
 
 function toggleCheck(a, force) {
-  const set = state.checked[a.kind];
+  const set = state.checked;
   const on = force ?? !set.has(a.id);
   on ? set.add(a.id) : set.delete(a.id);
   const idx = rendered.indexOf(a);
@@ -239,7 +243,7 @@ function openMenu(x, y, a) {
     a.urlInfo || a.helpLink ? ['external-link', 'Program website', 'site'] : null,
     '-',
     ['copy', 'Copy name', 'copy'],
-    ['check', state.checked[a.kind].has(a.id) ? 'Untick' : 'Tick', 'check', 'Space'],
+    ['check', state.checked.has(a.id) ? 'Untick' : 'Tick', 'check', 'Space'],
   ].filter(Boolean);
   m.innerHTML = items.map((it) => it === '-' ? '<hr>' :
     `<button data-act="${it[2]}" class="${it[4] || ''}" ${it[5] ? 'disabled' : ''}>${icon(it[0])}${it[1]}${it[3] ? `<kbd>${it[3]}</kbd>` : ''}</button>`).join('');
@@ -377,9 +381,8 @@ async function runJob(apps, mode) {
 }
 
 function refreshAfterJob(outcome) {
-  for (const [id, o] of outcome) if (o === 'removed') { state.checked.desktop.delete(id); state.checked.store.delete(id); }
-  load('desktop', { quiet: true });
-  if (state.loaded.store) load('store', { quiet: true });
+  for (const [id, o] of outcome) if (o === 'removed') state.checked.delete(id);
+  loadAll({ quiet: true });
 }
 
 const typeIcon = { folder: 'folder', file: 'file', key: 'key', value: 'key' };
@@ -469,12 +472,12 @@ async function removeEntry(a) {
   const res = await window.petal.clean([{ type: 'key', path: a.id }]);
   closeModal();
   if (res.cancelled) return toast('Cancelled.', true);
-  if (res.results[0]?.ok) { toast(`${a.name} removed from the list`); if (state.focused === a.id) focusApp(null); load('desktop', { quiet: true }); }
+  if (res.results[0]?.ok) { toast(`${a.name} removed from the list`); if (state.focused === a.id) focusApp(null); loadAll({ quiet: true }); }
   else toast('Could not remove the entry: ' + (res.results[0]?.error || 'unknown error'), true);
 }
 
 // ---------- events ----------
-function checkedApps() { const s = state.checked[state.kind]; return state.apps[state.kind].filter((a) => s.has(a.id)); }
+function checkedApps() { return allApps().filter((a) => state.checked.has(a.id)); }
 
 $('#list').addEventListener('click', (e) => {
   const row = e.target.closest('.row');
@@ -513,36 +516,27 @@ $$('.col[data-sort]').forEach((c) => c.addEventListener('click', () => {
   store.set('sort', state.sort);
   render();
 }));
-$$('.tab').forEach((t) => t.addEventListener('click', () => switchKind(t.dataset.kind)));
-function switchKind(kind) {
-  if (kind === state.kind) return;
-  state.kind = kind;
-  $$('.tab').forEach((t) => t.classList.toggle('active', t.dataset.kind === kind));
-  focusApp(null);
-  if (!state.loaded[kind]) { $('#list').innerHTML = ''; load(kind); } else render();
-}
 const search = $('#search');
 search.addEventListener('input', () => { state.query = search.value; search.parentElement.classList.toggle('has-text', !!search.value); render(); $('#list').scrollTop = 0; });
 $('#clear-search').addEventListener('click', () => { search.value = ''; search.dispatchEvent(new Event('input')); search.focus(); });
-$('#btn-refresh').addEventListener('click', () => load(state.kind));
+$('#btn-refresh').addEventListener('click', () => loadAll());
 $('#btn-theme').addEventListener('click', () => applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'));
 $('#btn-backups').addEventListener('click', () => window.petal.backups());
 $('#btn-export').addEventListener('click', async () => {
-  const rows = visible().map((a) => ({ name: a.name, publisher: a.publisher, version: a.version, size: fmtKB(a.sizeKB), date: fmtDate(a.installDate) }));
-  if (await window.petal.exportHtml(rows, state.kind === 'store' ? 'Store apps' : 'Installed programs')) toast('List exported');
+  const rows = visible().map((a) => ({ name: a.name + (a.kind === 'store' ? ' (Store)' : ''), publisher: a.publisher, version: a.version, size: fmtKB(a.sizeKB), date: fmtDate(a.installDate) }));
+  if (await window.petal.exportHtml(rows, 'Installed programs')) toast('List exported');
 });
 $('#btn-admin').addEventListener('click', () => window.petal.relaunchAdmin());
 $('#btn-uninstall-sel').addEventListener('click', () => startJob(checkedApps(), 'uninstall'));
 $('#btn-force-sel').addEventListener('click', () => startJob(checkedApps(), 'force'));
-$('#btn-clear-sel').addEventListener('click', () => { state.checked[state.kind].clear(); render(); });
+$('#btn-clear-sel').addEventListener('click', () => { state.checked.clear(); render(); });
 $('#quiet').addEventListener('change', (e) => store.set('quiet', e.target.checked));
 $('#overlay').addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('[data-r="0"]', $('#modal'))) $('[data-r="0"]', $('#modal')).click(); });
 
 document.addEventListener('keydown', (e) => {
   if (!$('#overlay').hidden) return;
   if (e.key === 'Escape') { closeMenu(); if (state.query) { $('#clear-search').click(); } return; }
-  if (e.key === 'F5') { e.preventDefault(); load(state.kind); return; }
-  if (e.ctrlKey && e.key === 'Tab') { e.preventDefault(); switchKind(state.kind === 'desktop' ? 'store' : 'desktop'); return; }
+  if (e.key === 'F5') { e.preventDefault(); loadAll(); return; }
   if (e.ctrlKey && e.key.toLowerCase() === 'f') { e.preventDefault(); search.focus(); search.select(); return; }
   const inSearch = document.activeElement === search;
   const cur = rendered.findIndex((a) => a.id === state.focused);
@@ -574,8 +568,7 @@ document.addEventListener('keydown', (e) => {
   state.sort = store.get('sort', state.sort);
   $('#quiet').checked = store.get('quiet', false);
   $('#admin-banner').hidden = await window.petal.isAdmin();
-  await load('desktop');
-  load('store', { quiet: true });
+  await loadAll();
   const st = await window.petal.selftest.info();
   if (st.on) { const s = document.createElement('script'); s.src = 'selftest.js'; document.body.append(s); }
 })();

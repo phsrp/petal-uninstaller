@@ -13,7 +13,7 @@
     await wait(1500);
     applyTheme('dark');
     const rowsWithIcons = $$('.row img').length;
-    log('rows', $$('.row').length, 'icons', rowsWithIcons);
+    log('rows', $$('.row').length, 'icons', rowsWithIcons, 'store tags', $$('.pill.store').length, 'count label', $('#app-count').textContent);
     await t.shot('01-main-dark');
 
     const pick = rendered.filter((a) => a.installLocation).slice(0, 3);
@@ -36,7 +36,10 @@
     await t.shot('04-search');
     search.value = ''; search.dispatchEvent(new Event('input'));
 
-    // Batch confirm dialog
+    // Batch confirm dialog with a mix of desktop programs and a Store app
+    const storeApp = rendered.find((a) => a.kind === 'store');
+    toggleCheck(storeApp, true);
+    log('mixed selection', checkedApps().map((a) => a.name + ' [' + a.kind + ']'));
     $('#btn-uninstall-sel').click();
     await wait(300);
     await t.shot('05-batch-confirm');
@@ -64,9 +67,12 @@
     applyTheme('light');
     await wait(300);
     await t.shot('08-main-light');
-    switchKind('store');
+    state.checked.clear();
+    search.value = 'microsoft'; search.dispatchEvent(new Event('input'));
     await wait(1500);
+    log('search microsoft ->', rendered.length, 'store tags', $$('.pill.store').length);
     await t.shot('09-store-light');
+    search.value = ''; search.dispatchEvent(new Event('input'));
     applyTheme('dark');
     log('DONE');
   } catch (e) {

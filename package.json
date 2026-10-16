@@ -1,7 +1,7 @@
 {
   "name": "petal-uninstaller",
   "productName": "Petal Uninstaller",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A Rose Pine themed Geek Uninstaller alternative: batch uninstall, force removal, leftover cleanup.",
   "main": "main.js",
   "author": "phsrp",
