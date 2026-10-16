@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'">
+  <title>Petal Uninstaller</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="icons.js"></script>
+</head>
+<body>
+  <header class="titlebar">
+    <div class="brand"><span class="i" data-i="flower"></span><span>Petal</span></div>
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-kind="desktop" role="tab"><span class="i" data-i="apps"></span>Desktop apps <span class="count" id="count-desktop">0</span></button>
+      <button class="tab" data-kind="store" role="tab"><span class="i" data-i="brand-windows"></span>Store apps <span class="count" id="count-store">0</span></button>
+    </div>
+    <label class="search">
+      <span class="i" data-i="search"></span>
+      <input id="search" type="text" placeholder="Search programs" spellcheck="false" autocomplete="off">
+      <button class="icon-btn clear-search" id="clear-search" title="Clear search"><span class="i" data-i="x"></span></button>
+    </label>
+    <div class="title-actions">
+      <button class="icon-btn" id="btn-refresh" title="Refresh (F5)"><span class="i" data-i="refresh"></span></button>
+      <button class="icon-btn" id="btn-export" title="Export list to HTML"><span class="i" data-i="file-export"></span></button>
+      <button class="icon-btn" id="btn-backups" title="Open registry backups"><span class="i" data-i="history"></span></button>
+      <button class="icon-btn" id="btn-theme" title="Switch light / dark"><span class="i" data-i="moon"></span></button>
+    </div>
+  </header>
+
+  <div class="banner" id="admin-banner" hidden>
+    <span class="i" data-i="shield-lock"></span>
+    <span>Not running as admin. Windows will ask for permission when a cleanup needs it.</span>
+    <button class="btn small" id="btn-admin">Restart as admin</button>
+  </div>
+
+  <main class="layout">
+    <section class="list-wrap">
+      <div class="list-head">
+        <label class="cb" title="Select all shown"><input type="checkbox" id="check-all"><span></span></label>
+        <span class="col-icon"></span>
+        <button class="col col-name" data-sort="name">Name <span class="sort"></span></button>
+        <button class="col col-pub" data-sort="publisher">Publisher <span class="sort"></span></button>
+        <button class="col col-size" data-sort="sizeKB">Size <span class="sort"></span></button>
+        <button class="col col-date" data-sort="installDate">Installed <span class="sort"></span></button>
+      </div>
+      <div class="list" id="list" tabindex="0"></div>
+      <div class="empty" id="empty" hidden>
+        <span class="i big" data-i="ghost"></span>
+        <p id="empty-text">Nothing matches your search.</p>
+      </div>
+      <div class="loading" id="loading"><span class="i spin" data-i="loader-2"></span> Reading installed programs</div>
+    </section>
+
+    <aside class="details" id="details">
+      <div class="details-empty">
+        <span class="i big" data-i="package"></span>
+        <p>Pick a program to see its details.</p>
+        <p class="hint">Tick several to uninstall them in one go.</p>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="actionbar" id="actionbar">
+    <div class="sel-info"><strong id="sel-count">0</strong> selected <span id="sel-size" class="muted"></span></div>
+    <label class="toggle" title="Use the program's silent uninstall when it has one, so no wizard pops up">
+      <input type="checkbox" id="quiet"><span class="track"></span>Quiet uninstall
+    </label>
+    <div class="spacer"></div>
+    <button class="btn ghost" id="btn-clear-sel" disabled>Clear</button>
+    <button class="btn danger-ghost" id="btn-force-sel" disabled><span class="i" data-i="bolt"></span>Force remove</button>
+    <button class="btn primary" id="btn-uninstall-sel" disabled><span class="i" data-i="trash"></span>Uninstall</button>
+  </footer>
+
+  <div class="menu" id="menu" hidden></div>
+  <div class="overlay" id="overlay" hidden><div class="modal" id="modal"></div></div>
+  <div class="toasts" id="toasts"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
