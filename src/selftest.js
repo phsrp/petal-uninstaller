@@ -16,6 +16,22 @@
     log('rows', $$('.row').length, 'icons', rowsWithIcons, 'store tags', $$('.pill.store').length, 'count label', $('#app-count').textContent);
     await t.shot('01-main-dark');
 
+    // Real clicks on a row's checkbox: the visible tick, the row and the saved state must agree.
+    const clickCheck = async (i, part) => {
+      $(`.row[data-i="${i}"] .cb ${part}`).click();
+      await wait(50);
+      const input = $(`.row[data-i="${i}"] .cb input`);
+      return { shown: input.checked, row: $(`.row[data-i="${i}"]`).classList.contains('checked'), saved: state.checked.has(rendered[i].id) };
+    };
+    log('click box on', await clickCheck(4, 'input'));
+    log('click box off', await clickCheck(4, 'input'));
+    log('click edge on', await clickCheck(5, 'span'));
+    log('click edge off', await clickCheck(5, 'span'));
+    $('#check-all').click(); await wait(50);
+    log('tick all', $$('.row .cb input').every((c) => c.checked), state.checked.size === rendered.length);
+    $('#check-all').click(); await wait(50);
+    log('untick all', $$('.row .cb input').every((c) => !c.checked), state.checked.size);
+
     const pick = rendered.filter((a) => a.installLocation).slice(0, 3);
     pick.forEach((a) => toggleCheck(a, true));
     focusApp(pick[0], true);

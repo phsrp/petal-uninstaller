@@ -483,7 +483,9 @@ $('#list').addEventListener('click', (e) => {
   const row = e.target.closest('.row');
   if (!row) return;
   const a = rendered[+row.dataset.i];
-  if (e.target.closest('.cb')) { e.preventDefault(); toggleCheck(a); return; }
+  // Let the checkbox flip itself and follow it. (preventDefault here made the browser undo the visible tick.)
+  // A click on the label part arrives again as a click on the input, so only the input click counts.
+  if (e.target.closest('.cb')) { if (e.target.matches('input')) toggleCheck(a, e.target.checked); return; }
   if (e.ctrlKey) { toggleCheck(a); }
   else if (e.shiftKey && state.focused) {
     const from = rendered.findIndex((x) => x.id === state.focused);
@@ -509,7 +511,10 @@ window.addEventListener('blur', closeMenu);
 window.addEventListener('resize', closeMenu);
 $('#list').addEventListener('scroll', closeMenu);
 
-$('#check-all').addEventListener('change', (e) => { rendered.forEach((a) => toggleCheck(a, e.target.checked)); });
+$('#check-all').addEventListener('change', (e) => {
+  const on = e.target.checked; // read once: toggleCheck updates this box as it goes
+  rendered.forEach((a) => toggleCheck(a, on));
+});
 $$('.col[data-sort]').forEach((c) => c.addEventListener('click', () => {
   const k = c.dataset.sort;
   state.sort = state.sort.key === k ? { key: k, dir: -state.sort.dir } : { key: k, dir: k === 'name' || k === 'publisher' ? 1 : -1 };
